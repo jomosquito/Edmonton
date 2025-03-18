@@ -2,8 +2,25 @@ from flask import Blueprint, redirect, url_for, request
 from O365 import Account
 import json
 from .. import my_db
+from ..models import credentials, serialize, deserialize, Profile, db, scopes
+
 
 oauth_routes = Blueprint('oauth_routes', __name__)
+
+def open1():
+
+    with open('o365_token.txt', 'r') as token_file:
+        token_data = json.load(token_file)
+        account_data = token_data.get("Account")
+        id_data = token_data.get("IdToken")
+        for account in account_data.values():
+            email = account.get("username")
+            idtoken = account.get
+
+        for account in id_data.values():
+            idtoken = account.get("home_account_id")
+
+        return email,idtoken
 
 @oauth_routes.route('/stepone')
 def auth_step_one():
