@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
-from ..models import TermWithdrawalRequest, db
+from ..models import TermWithdrawalRequest, db, Profile
 
 withdrawal_routes = Blueprint('withdrawal_routes', __name__)
 
