@@ -1,34 +1,33 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
-from ..models import Profile, db
+from flask import Blueprint, redirect, url_for, request
+from O365 import Account
+import json
+from .. import my_db
 
-user_routes = Blueprint('user_routes', __name__)
+oauth_routes = Blueprint('oauth_routes', __name__)
 
-@user_routes.route('/userhompage')
-def user_home():
-    user_id = session.get('user_id')
-    if not user_id:
-        return redirect(url_for('auth_routes.login'))
-    user = Profile.query.get(user_id)
-    return render_template('userhompage.html', user=user)
+@oauth_routes.route('/stepone')
+def auth_step_one():
+    callback = url_for('oauth_routes.auth_step_two_callback', _external=True).replace("127.0.0.1", "localhost")
+    account = Account(credentials)
+    url, flow = account.con.get_authorization_url(requested_scopes=scopes, redirect_uri=callback)
+    my_db.store_flow(serialize(flow))
+    return redirect(url)
 
-@user_routes.route('/settings', methods=['GET', 'POST'])
-def settings():
-    user_id = session.get('user_id')
-    if not user_id:
-        return redirect(url_for('auth_routes.login'))
-    user = Profile.query.get(user_id)
-    if request.method == 'POST':
-        new_email = request.form.get("email")
-        if new_email:
-            user.email_ = new_email
+@oauth_routes.route('/steptwo')
+def auth_step_two_callback():
+    account = Account(credentials)
+    my_saved_flow_str = my_db.get_flow()
+    if not my_saved_flow_str:
+        return "Flow state not found. Restart authentication.", 400
+    my_saved_flow = deserialize(my_saved_flow_str)
+    requested_url = request.url
+    result = account.con.request_token(requested_url, flow=my_saved_flow)
+    email, idtoken = open1()
+    if result:
+        profile = Profile.query.order_by(Profile.id.desc()).first()
+        if profile:
+            profile.email_ = email
+            profile.usertokenid = idtoken
             db.session.commit()
-        return redirect(url_for('user_routes.settings'))
-    return render_template('settings.html', user=user)
-
-@user_routes.route('/reports')
-def reports():
-    user_id = session.get('user_id')
-    if not user_id:
-        return redirect(url_for('auth_routes.login'))
-    user = Profile.query.get(user_id)
-    return render_template('reports.html', user=user)
+        return redirect('/')
+    return "Authentication failed", 400
