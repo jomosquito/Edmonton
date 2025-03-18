@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications</title>
+  <style>
+    /* Page background styling */
+    body {
+      background-color: #6a5acd; /* blueish purple */
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      color: #fff;
+    }
+
+    /* Navigation buttons styling */
+    .button-container {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .return-btn {
+      display: inline-block;
+      background-color: #0c120c;
+      color: #fff;
+      padding: 10px 20px;
+      text-decoration: none;
+      font-size: 18px;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+      margin: 20px 10px;
+    }
+
+    .return-btn:hover {
+      background-color: #8345a0;
+    }
+
+    /* Table styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      color: #000;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    /* Action button styling */
+    .action-btn {
+      display: inline-block;
+      background-color: #008CBA; /* blue color */
+      color: #fff;
+      padding: 8px 16px;
+      text-decoration: none;
+      font-size: 16px;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+      margin-right: 5px;
+      border: none;
+    }
+
+    .action-btn:hover {
+      background-color: #14e71b;
+    }
+
+    button.action-btn {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="button-container">
+    <a href="/a" class="return-btn">Return</a>
+    <a href="/create" class="return-btn">Create</a>
+    <a href="/notifications" class="return-btn">Notifications</a>
+  </div>
+
+  <h1>Pending Requests</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>User ID</th>
+        <th>Reason</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for request in pending_requests %}
+      <tr>
+        <td>{{ request.id }}</td>
+        <td>{{ request.user_id }}</td>
+        <td>{{ request.reason }}</td>
+        <td>{{ request.status }}</td>
+        <td>
+          <form action="{{ url_for('approve_request', request_id=request.id) }}" method="post" style="display:inline;">
+            <button type="submit" class="action-btn">Approve</button>
+          </form>
+          <form action="{{ url_for('reject_request', request_id=request.id) }}" method="post" style="display:inline;">
+            <button type="submit" class="action-btn">Reject</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

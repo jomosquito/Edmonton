@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Requests</title>
+  <!-- Import Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* CSS Variables for theme consistency */
+    :root {
+      --primary-color: #2575fc;
+      --secondary-color: #6a11cb;
+      --background-color: #f0f2f5;
+      --card-bg: #fff;
+    }
+
+    /* Base reset and styling */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--background-color);
+      color: #333;
+    }
+
+    header {
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 700;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-container {
+      display: flex;
+      min-height: calc(100vh - 80px);
+    }
+
+    nav {
+      width: 250px;
+      background: var(--secondary-color);
+      padding: 20px;
+      color: #fff;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    nav ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    nav ul li {
+      margin-bottom: 20px;
+    }
+
+    nav ul li a {
+      display: block;
+      padding: 10px;
+      border-radius: 5px;
+      color: #fff;
+      text-decoration: none;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+    }
+
+    nav ul li a:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateX(5px);
+    }
+
+    main {
+      flex: 1;
+      padding: 40px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      margin-bottom: 15px;
+      color: var(--primary-color);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    input, select {
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background: var(--primary-color);
+      color: #fff;
+      text-decoration: none;
+      border: none;
+      border-radius: 5px;
+      transition: background 0.3s ease;
+      cursor: pointer;
+      font-size: 1rem;
+      align-self: flex-start;
+    }
+
+    .btn:hover {
+      background: var(--secondary-color);
+    }
+  </style>
+</head>
+<body>
+  <header>User Requests</header>
+  <div class="dashboard-container">
+    <nav>
+      <ul>
+        <li><a href="/userhompage">Dashboard</a></li>
+        <li><a href="/profile">Profile</a></li>
+        <li><a href="/settings">Request</a></li>
+        <li><a href="/status">Request Statuses</a></li>
+        <li><a href="/">Logout</a></li>
+      </ul>
+    </nav>
+    <main>
+      <!-- Settings Update Form -->
+      <div class="card">
+        <h2>Settings</h2>
+        <p>Update your preferences below:</p>
+        <form action="/settings" method="POST">
+          <label for="email">Email:</label>
+          <input type="email" id="email" name="email" value="{{ user.email_ }}" required>
+          <button type="submit" class="btn">Save Changes</button>
+        </form>
+      </div>
+      <!-- Change of Address Request -->
+      <div class="card">
+        <h2>Change of Address</h2>
+        <p>Submit your change of address request:</p>
+        <form action="/addresschangerequest" method="POST">
+          <label for="address">Address:</label>
+          <input type="text" id="address" name="address" value="{{ user.address }}" required>
+          <button type="submit" class="btn">Submit Request</button>
+        </form>
+      </div>
+      <!-- Term Withdrawal Request Form -->
+      <div class="card">
+        <h2>Term Withdraw Request</h2>
+        <p>Submit your reason for term withdrawal:</p>
+        <form action="/Termdroprequest" method="POST">
+          <label for="reason">Select Reason:</label>
+          <select id="reason" name="reason" required>
+            <option value="">--Please choose an option--</option>
+            <option value="financial">Financial Constraints</option>
+            <option value="academic">Academic Reasons</option>
+            <option value="personal">Personal Reasons</option>
+            <option value="other">Other</option>
+          </select>
+          <button type="submit" class="btn">Submit Request</button>
+        </form>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
