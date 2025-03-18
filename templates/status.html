@@ -149,18 +149,20 @@
           <thead>
             <tr>
               <th>ID</th>
+              <th>Term</th>
               <th>Reason</th>
               <th>Status</th>
-              <th>Created At</th>
+              <th>Submitted</th>
             </tr>
           </thead>
           <tbody>
             {% for request in term_requests %}
             <tr>
               <td>{{ request.id }}</td>
+              <td>{{ request.semester }} {{ request.year }}</td>
               <td>{{ request.reason }}</td>
               <td>{{ request.status }}</td>
-              <td>{{ request.created_at }}</td>
+              <td>{{ request.created_at.strftime('%m/%d/%Y') }}</td>
             </tr>
             {% endfor %}
           </tbody>

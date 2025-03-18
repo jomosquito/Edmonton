@@ -6,12 +6,28 @@ from O365 import Account
 import json
 from config import client_id, client_secret, SECRET_KEY
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+import os
+import uuid
 import jwt
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 db = SQLAlchemy(app)
+
+
+# File upload configuration
+UPLOAD_FOLDER = os.path.join('static', 'uploads')
+SIGNATURE_FOLDER = os.path.join(UPLOAD_FOLDER, 'signatures')
+os.makedirs(SIGNATURE_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB max upload
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Microsoft OAuth Credentials
 credentials = (client_id, client_secret)
@@ -58,12 +74,34 @@ class Profile(db.Model):
     def check_password(self, password):
         return check_password_hash(self.pass_word, password)
 
-# New Model for Term Withdrawal Requests
+# Python
 class TermWithdrawalRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('profile.id'), nullable=False)
+    
+    # Student information
+    myuh_id = db.Column(db.String(20), nullable=True)
+    phone = db.Column(db.String(20), nullable=True)
+    program = db.Column(db.String(100), nullable=True)
+    academic_career = db.Column(db.String(50), nullable=True)
+    
+    # Withdrawal information
+    term = db.Column(db.String(20), nullable=False)
+    year = db.Column(db.String(10), nullable=False)
     reason = db.Column(db.String(200), nullable=False)
-    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
+    details = db.Column(db.Text, nullable=True)
+    
+    # Acknowledgements (stored as comma-separated values)
+    acknowledgements = db.Column(db.String(500), nullable=True)
+    
+    # Signature and dates
+    student_signature = db.Column(db.String(200), nullable=True)  # Path to signature file
+    signature_date = db.Column(db.DateTime, default=datetime.utcnow)
+    admin_signature = db.Column(db.String(200), nullable=True)  # Admin who approved/rejected
+    admin_signature_date = db.Column(db.DateTime, nullable=True)
+    
+    # Request status
+    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected, returned
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationship to access the requesting user's profile
@@ -75,8 +113,18 @@ class TermWithdrawalRequest(db.Model):
         return "Term Withdrawal"
 
     @property
-    def details(self):
-        return f"Reason: {self.reason}"
+    def details_display(self):
+        return f"Term: {self.term} {self.year}, Reason: {self.reason}"
+    
+class UserSignature(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('profile.id'), nullable=False)
+    signature_file = db.Column(db.String(200), nullable=False)  # Path to signature file
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationship to the user
+    user = db.relationship('Profile', backref='signatures')
+
 class AddressChangeRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('profile.id'), nullable=False)
@@ -93,14 +141,20 @@ class AddressChangeRequest(db.Model):
 @app.route('/')
 def home():
     return render_template('login.html')
+
 @app.route('/status')
 def status():
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('login'))
+    
+    # Get all requests for the current user
     term_requests = TermWithdrawalRequest.query.filter_by(user_id=user_id).all()
     address_requests = AddressChangeRequest.query.filter_by(user_id=user_id).all()
-    return render_template('status.html', term_requests=term_requests, address_requests=address_requests)
+    
+    return render_template('status.html', 
+                          term_requests=term_requests, 
+                          address_requests=address_requests)
 @app.route('/notifications')
 def notification():
     pending_requests = TermWithdrawalRequest.query.filter_by(status='pending').all()
@@ -264,6 +318,82 @@ def auth_step_two_callback():
 # -------------------------------
 # User and Admin Endpoints
 # -------------------------------
+@app.route('/term-withdrawal-form')
+def term_withdrawal_form():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+    user = Profile.query.get(user_id)
+    return render_template('term_withdrawal.html', user=user)
+
+# Python
+# filepath: c:\Users\masca\OneDrive\Documents\GitHub\Edmonton\main.py
+@app.route('/submit-withdrawal', methods=['POST'])
+def submit_withdrawal():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+    
+    # Get form data
+    myuh_id = request.form.get('myuh_id')
+    phone = request.form.get('phone')
+    program = request.form.get('program')
+    academic_career = request.form.get('academic_career')
+    term = request.form.get('term')
+    year = request.form.get('year')
+    reason = request.form.get('reason')
+    details = request.form.get('details', '')
+    
+    # Get acknowledgements as a list and join with commas
+    acknowledgements = request.form.getlist('acknowledgements[]')
+    acknowledgements_str = ','.join(acknowledgements) if acknowledgements else ''
+    
+    # Handle signature upload
+    if 'signature' not in request.files:
+        return redirect(url_for('term_withdrawal_form'))
+        
+    signature_file = request.files['signature']
+    
+    if signature_file.filename == '':
+        return redirect(url_for('term_withdrawal_form'))
+        
+    if signature_file and allowed_file(signature_file.filename):
+        filename = secure_filename(signature_file.filename)
+        # Add a unique identifier to prevent overwriting
+        filename = f"{uuid.uuid4()}_{filename}"
+        filepath = os.path.join(SIGNATURE_FOLDER, filename)
+        signature_file.save(filepath)
+        
+        # Store signature record
+        user_signature = UserSignature(
+            user_id=user_id, 
+            signature_file=os.path.join('static', 'uploads', 'signatures', filename)
+        )
+        db.session.add(user_signature)
+        
+        # Create withdrawal request
+        withdrawal_request = TermWithdrawalRequest(
+            user_id=user_id,
+            myuh_id=myuh_id,
+            phone=phone,
+            program=program,
+            academic_career=academic_career,
+            term=term,
+            year=year,
+            reason=reason,
+            details=details,
+            acknowledgements=acknowledgements_str,
+            student_signature=os.path.join('static', 'uploads', 'signatures', filename),
+            status='pending'
+        )
+        
+        db.session.add(withdrawal_request)
+        db.session.commit()
+        
+        return redirect(url_for('status'))
+    
+    return redirect(url_for('term_withdrawal_form'))
+
 
 # Add a new profile
 @app.route('/add', methods=["POST"])

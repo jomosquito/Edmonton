@@ -144,20 +144,8 @@
       <!-- Term Withdrawal Request -->
       <div class="card">
         <h2>Request Term Withdrawal</h2>
-        <form action="{{ url_for('term_withdraw_request') }}" method="post">
-          <div class="form-group">
-            <label for="reason">Reason:</label>
-            <select id="reason" name="reason" required>
-              <option value="" disabled selected>Select a reason</option>
-              <option value="Financial Issues">Financial Issues</option>
-              <option value="Health Problems">Health Problems</option>
-              <option value="Personal Reasons">Personal Reasons</option>
-              <option value="Academic Challenges">Academic Challenges</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <button type="submit">Submit Request</button>
-        </form>
+        <p>Complete the official UH Term Withdrawal Form</p>
+        <a href="{{ url_for('term_withdrawal_form') }}" class="btn">Complete Term Withdrawal Form</a>
       </div>
 
       <!-- Address Change Request -->
