@@ -1,6 +1,31 @@
 from . import db
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from config import client_secret, client_id
+import json
+
+# Microsoft OAuth Credentials
+credentials = (client_id, client_secret)
+scopes = ['Mail.ReadWrite', 'Mail.Send', 'email']
+
+# Simple in-memory database for OAuth flows
+class MyDB:
+    def __init__(self):
+        self.storage = {}
+
+    def store_flow(self, flow):
+        self.storage['flow'] = flow
+
+    def get_flow(self):
+        return self.storage.get('flow')
+
+my_db = MyDB()
+
+def serialize(flow):
+    return json.dumps(flow)
+
+def deserialize(flow_str):
+    return json.loads(flow_str)
 
 class Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
