@@ -36,11 +36,11 @@ This project is a web application for managing user profiles.
 
 5. **Run the application:**
    ```sh
+   python migrations.py
     python main.py
 
-
 7. **Open in your web browser:**
-
-    After running "python main.py" in your command terminal...
+   First run, "python migrations.py",
+   Then after running "python main.py" in your command terminal...
 
     Click on the hyperlink: http://127.0.0.1:5000
