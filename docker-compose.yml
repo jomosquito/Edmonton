@@ -10,5 +10,10 @@ services:
       - ./instance:/app/instance
       - ./static:/app/static
     environment:
-      - FLASK_DEBUG=0
+      - FLASK_APP=main.py
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
     restart: unless-stopped
+    # Run in interactive mode for debugging
+    tty: true
+    stdin_open: true

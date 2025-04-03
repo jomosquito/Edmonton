@@ -2,9 +2,14 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-COPY . /app/
+# Copy requirements file first to leverage Docker cache
+COPY requirements-docker.txt /app/
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Install requirements
+RUN pip install --no-cache-dir -r requirements-docker.txt
+
+# Now copy the rest of the application
+COPY . /app/
 
 # Create necessary directories
 RUN mkdir -p static/pdfs static/temp static/uploads/documentation static/uploads/signatures instance
@@ -21,5 +26,7 @@ RUN echo "client_id = 'your_client_id'" > config.py && \
     echo "client_secret = 'your_client_secret'" >> config.py && \
     echo "SECRET_KEY = 'your_secret_key'" >> config.py
 
-# Run migrations and then the application
-CMD ["sh", "-c", "python migrations.py && python main.py"]
+# Run entrypoint script
+COPY docker-entrypoint.sh /app/
+RUN chmod +x /app/docker-entrypoint.sh
+CMD ["/app/docker-entrypoint.sh"]
